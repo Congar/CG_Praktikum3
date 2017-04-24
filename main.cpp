@@ -1,5 +1,5 @@
 //Version 1.0
-//
+//24.04.2017
 #include "mainwindow.h"
 #include <QApplication>
 
