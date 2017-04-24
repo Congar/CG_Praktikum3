@@ -90,7 +90,7 @@ void MyGLWidget::paintGL()
         glVertex3f( 1.0f, -1.0f,  1.0f);    //F
         glVertex3f(1.0f,1.0f,1.0f);         //G
         glVertex3f( -1.0f, 1.0f,  1.0f);    //H*/
-        //TESTTTTTTTTTTTTS
+
         //VORNE
         glColor3f(0,1,0);
         glVertex3f( -1.0f, -1.0f,  1.0f);   //E

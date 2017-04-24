@@ -1,5 +1,7 @@
+
 //Version 1.0
-//
+//Aufgabe 3.2
+
 #include "mainwindow.h"
 #include <QApplication>
 
