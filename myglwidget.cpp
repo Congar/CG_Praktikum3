@@ -317,36 +317,12 @@ void MyGLWidget::initializeGL()
     glClearDepth(1.0f);
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     erzeugeBuffer();
-    //P3:
-    //  Erzeugen der Buffer (nur einmal aufrufen)
-        // Erzeuge VBO, die Parameter verteilen sich hier auf mehrere Methoden
-
-    // glClear und Matrixtransformationen
-    // Mache die Buffer im OpenGL-Kontext verfügbar
-   // glBindBuffer(GL_ARRAY_BUFFER, vboHandle);
-   // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indicesHandle);
-    // Aktiviere die ClientStates zur Verwendung des Vertex- und Color-Arrays
-   // glEnableClientState(GL_VERTEX_ARRAY);
-   // glEnableClientState(GL_COLOR_ARRAY);
-    // Setze den Vertex-Pointer ( veraltet )
-    // Der erste Vertex liegt an Stelle 0 des VBO, hat 4 Komponenten,
-    // ist vom Typ GL_FLOAT, und 8*GL_Float Byte liegen zwischen jedem
-    // nachfolgenden Eckpunkt
-   // glVertexPointer(4, GL_FLOAT, sizeof(GLfloat) * 8, (char*) NULL+0);
-    // Setze den Color-Pointer ( veraltet )
-    // Die erste Farbe findet sich beim 17. Byte im VBO, für den Rest s. oben
-   // glColorPointer(4, GL_FLOAT, sizeof(GLfloat) * 8, (char*) NULL+sizeof(GLfloat)*4);
-    // Zeichne die 6 Elemente (Indizes) als Dreiecke
-    // Die anderen Parameter verhalten sich wie oben
-    //glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, 0);
-    //glDrawArrays(GL_TRIANGLES, 0, 6); // Alternative zu glDrawElements
-    // Deaktiviere die Client-States wieder
-    //glDisableClientState(GL_VERTEX_ARRAY);
-    //glDisableClientState(GL_COLOR_ARRAY);
-    // Löse die Buffer aus dem OpenGL-Kontext
-    //glBindBuffer(GL_ARRAY_BUFFER, 0);
-    //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-    //END
+    // *** Initialisierung ***
+    // Lade die Shader-Sourcen aus externen Dateien (ggf. anpassen)
+    shaderProgram.addShaderFromSourceFile(QOpenGLShader::Vertex, "D:/Computergrafik/Praktikum3/P3/default130.vert");
+    shaderProgram.addShaderFromSourceFile(QOpenGLShader::Fragment,"D:/Computergrafik/Praktikum3/P3/default130.frag");
+    // Kompiliere und linke die Shader-Programme
+    shaderProgram.link();
 
 
 
@@ -364,9 +340,12 @@ void MyGLWidget::resizeGL(GLsizei width, GLsizei height)
    glViewport(0, 0, width, height);
 
    // Set projection matrix to a perspective projection
-   glMatrixMode(GL_PROJECTION);
-   glLoadIdentity();
-   glFrustum(-0.05, 0.05, -0.05, 0.05, 0.1, 100.0);
+  // glMatrixMode(GL_PROJECTION);
+   //
+  // matrix.perspective(60.0, 4.0/3.0, 0.1, 100.0);
+   //glLoadIdentity();
+   pMatrix.setToIdentity();
+   pMatrix.frustum(-0.05, 0.05, -0.05, 0.05, 0.1, 100.0);
 }
 void MyGLWidget::erzeugeBuffer()
 {
@@ -388,34 +367,70 @@ void MyGLWidget::erzeugeBuffer()
 // Handler for window draw event
 void MyGLWidget::paintGL()
 {
-
+    // *** Rendern ***
+     // Clear buffer to set color and alpha
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    //std::stack<QMatrix4x4> matrixStack;
+    matrix.setToIdentity();
+    vMatrix.setToIdentity();
+    matrix.translate(x_Axis, y_Axis, z_Axis);
+    matrix.rotate(counter,0,1,0);
+    matrix.rotate(counter,0,1,0);
+    matrixStack.push(matrix);
+    matrix=matrixStack.top();
+    matrixStack.pop();
+    shaderProgram.bind();
     vbo.bind();
     ibo.bind();
-    // Clear buffer to set color and alpha
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    // Apply model view transformations
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glEnableClientState(GL_COLOR_ARRAY);
-    glTranslatef(x_Axis, y_Axis, z_Axis);
-    glRotatef(slider,0,0,1);
-    glRotatef(counter,0,1,0);
+    // Lokalisiere bzw. definiere die Schnittstelle für die Eckpunkte
+    int attrVertices = 0;
+    attrVertices = shaderProgram.attributeLocation("vert"); // #version 130
+    // Lokalisiere bzw. definiere die Schnittstelle für die Farben
+    int attrColors = 1;
+    attrColors = shaderProgram.attributeLocation("color"); // #version 130
+    // Aktiviere die Verwendung der Attribute-Arrays
+    shaderProgram.enableAttributeArray(attrVertices);
+    shaderProgram.enableAttributeArray(attrColors);
+    // Lokalisiere bzw. definiere die Schnittstelle für die Transformationsmatrix
+    // Die Matrix kann direkt übergeben werden, da setUniformValue für diesen Typ
+    // überladen ist
+    int unifMatrix = 0;
+    unifMatrix = shaderProgram.uniformLocation("matrix"); // #version 130
+    int punifMatrix = 0;
+    punifMatrix = shaderProgram.uniformLocation("pMatrix"); // #version 130
+    int vunifMatrix = 0;
+    vunifMatrix = shaderProgram.uniformLocation("vMatrix"); // #version 130
+
+    shaderProgram.setUniformValue(unifMatrix, matrix);
+    shaderProgram.setUniformValue(punifMatrix, pMatrix);
+    shaderProgram.setUniformValue(vunifMatrix, vMatrix);
+    // Fülle die Attribute-Buffer mit den korrekten Daten
+    int offset = 0;
+    int stride = 8 * sizeof(GLfloat);
+    shaderProgram.setAttributeBuffer(attrVertices, GL_FLOAT, offset, 4, stride);
+    offset += 4 * sizeof(GLfloat);
+    shaderProgram.setAttributeBuffer(attrColors, GL_FLOAT, offset, 4, stride);
+
+
+
+
+    //glEnableClientState(GL_VERTEX_ARRAY);
+    //glEnableClientState(GL_COLOR_ARRAY);
+
     // Setze den Vertex-Pointer ( veraltet )
     // Der erste Vertex liegt an Stelle 0 des VBO, hat 4 Komponenten,
     // ist vom Typ GL_FLOAT, und 8*GL_Float Byte liegen zwischen jedem
     // nachfolgenden Eckpunkt
-    glVertexPointer(4, GL_FLOAT, sizeof(GLfloat) * 8, (char*) NULL+0);
-    // Setze den Color-Pointer ( veraltet )
-    // Die erste Farbe findet sich beim 17. Byte im VBO, für den Rest s. oben
-    glColorPointer(4, GL_FLOAT, sizeof(GLfloat) * 8, (char*) NULL+sizeof(GLfloat)*4);
-    // Zeichne die 6 Elemente (Indizes) als Dreiecke
-    // Die anderen Parameter verhalten sich wie oben
+
     glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_BYTE, 0);
     //glDrawArrays(GL_TRIANGLES, 0, 6); // Alternative zu glDrawElements
     // Deaktiviere die Client-States wieder
-    glDisableClientState(GL_VERTEX_ARRAY);
-    glDisableClientState(GL_COLOR_ARRAY);
+    // Deaktiviere die Verwendung der Attribute-Arrays
+    shaderProgram.disableAttributeArray(attrVertices);
+    shaderProgram.disableAttributeArray(attrColors);
+
+    /*glDisableClientState(GL_VERTEX_ARRAY);
+    glDisableClientState(GL_COLOR_ARRAY);*/
 
 
 //NEU FÜR P3:
@@ -442,6 +457,8 @@ void MyGLWidget::paintGL()
     counter++;
     vbo.release();
     ibo.release();
+    // Löse das Shader-Programm
+    shaderProgram.release();
 }
 void MyGLWidget::receiveRotationZ(int wert)
 {

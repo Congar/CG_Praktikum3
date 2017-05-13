@@ -16,11 +16,18 @@
 #include <string>
 #include <QTimer>
 #include <QtOpenGL>
-
+#include <QOpenGLShaderProgram>
 class MyGLWidget : public QOpenGLWidget
 {
     Q_OBJECT
     QOpenGLTexture* qTex;
+private:
+    QMatrix4x4 pMatrix;                 //Projection Matrix
+    QMatrix4x4 matrix;                  //Modelmatrix
+    QMatrix4x4 vMatrix;                 //ViewMatrix
+    std::stack<QMatrix4x4> matrixStack;
+    QOpenGLBuffer vbo;
+    QOpenGLBuffer ibo;
 public:
     // Eckpunkte
     // (1 Rechteck mit 4 Eckpunkten mit je 4 Koordinaten und 4 Farbkanälen)
@@ -31,8 +38,8 @@ public:
     GLuint vboHandle;
     // Handle für BO der Indizes für die zu zeichnenden Elemente
     GLuint indicesHandle;
-    QOpenGLBuffer vbo;
-    QOpenGLBuffer ibo;
+
+    QOpenGLShaderProgram shaderProgram;
     //MyGLWidget();
     MyGLWidget(QWidget *parent);
     void resizeGL(GLsizei width, GLsizei height);

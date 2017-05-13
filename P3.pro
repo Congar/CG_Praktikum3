@@ -36,3 +36,6 @@ HEADERS  += mainwindow.h \
 FORMS    += mainwindow.ui
 
 DISTFILES +=
+
+RESOURCES += \
+    shader.qrc

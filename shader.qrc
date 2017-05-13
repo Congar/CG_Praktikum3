@@ -1,0 +1,8 @@
+<RCC>
+    <qresource prefix="/">
+        <file>P3/default130.frag</file>
+        <file>P3/default130.vert</file>
+        <file>P3/default330.frag</file>
+        <file>P3/default330.vert</file>
+    </qresource>
+</RCC>
