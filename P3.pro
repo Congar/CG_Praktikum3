@@ -8,6 +8,11 @@ QT       += core gui opengl
 LIBS += -lopengl32
 QT += core gui
 
+LIBS     += -lopengl32 -LC:/assimp/code/ -lassimp
+INCLUDEPATH +=  C:/assimp/include/
+DEPENDPATH  +=  C:/assimp/include/
+
+
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 TARGET = P3
@@ -27,15 +32,19 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += main.cpp\
         mainwindow.cpp \
-    myglwidget.cpp
+    myglwidget.cpp \
+    modelloader.cpp
 
 
 HEADERS  += mainwindow.h \
-    myglwidget.h
+    myglwidget.h \
+    modelloader.h
 
 FORMS    += mainwindow.ui
 
-DISTFILES +=
+DISTFILES += \
+    P3_models/sphere_low.obj \
+    P3_models/bunny.obj
 
 RESOURCES += \
     shader.qrc

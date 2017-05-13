@@ -8,7 +8,7 @@
 #include <QOpenGLBuffer>
 #include <QOpenGLShaderProgram>
 #include <stack>
-//#include <modelloader.h>
+#include <modelloader.h>
 #include <QDebug>
 #include <QDir>
 #include <QOpenGLTexture>
@@ -28,6 +28,11 @@ private:
     std::stack<QMatrix4x4> matrixStack;
     QOpenGLBuffer vbo;
     QOpenGLBuffer ibo;
+    // Als Pointer, da die Größer später dynamisch festgelegt wird
+    GLfloat* vboData;
+    GLuint* indexData; // GLuint statt GLubyte, da viele Modelle groß sind
+    unsigned int vboLength;
+    unsigned int iboLength;
 public:
     // Eckpunkte
     // (1 Rechteck mit 4 Eckpunkten mit je 4 Koordinaten und 4 Farbkanälen)

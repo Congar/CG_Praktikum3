@@ -29,7 +29,7 @@ unsigned int counter = 0;
 unsigned int slider=0;
 float x_Axis=0;
 float y_Axis=0;
-float z_Axis=-7;
+float z_Axis=-7.0f;
 
 //AUFGABE 3.2
 //FILLARAY:
@@ -308,7 +308,8 @@ MyGLWidget::MyGLWidget(QWidget *parent):QOpenGLWidget(parent)
 // OpenGL settings initialization
 void MyGLWidget::initializeGL()
 {
-    fillArray();
+    //fillArray();
+
     glEnable(GL_DEPTH_TEST);
     //glEnable(GL_CULL_FACE);
     glDepthFunc(GL_LEQUAL);
@@ -316,15 +317,30 @@ void MyGLWidget::initializeGL()
     glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
     glClearDepth(1.0f);
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-    erzeugeBuffer();
+
     // *** Initialisierung ***
     // Lade die Shader-Sourcen aus externen Dateien (ggf. anpassen)
     shaderProgram.addShaderFromSourceFile(QOpenGLShader::Vertex, "D:/Computergrafik/Praktikum3/P3/default130.vert");
     shaderProgram.addShaderFromSourceFile(QOpenGLShader::Fragment,"D:/Computergrafik/Praktikum3/P3/default130.frag");
     // Kompiliere und linke die Shader-Programme
     shaderProgram.link();
-
-
+    ModelLoader model;
+    bool res = model.loadObjectFromFile("D:/Computergrafik/Praktikum3/P3_models/sphere_high.obj");
+    if(res)
+    {
+        // Frage zu erwartende Array-Längen ab
+        vboLength = model.lengthOfVBO();
+        iboLength = model.lengthOfIndexArray();
+        // Generiere VBO und Index-Array
+        vboData = new GLfloat[vboLength];
+        indexData = new GLuint[iboLength];
+        model.genVBO(vboData,0,false,true);
+        model.genIndexArray(indexData);
+     }else
+    {
+        qDebug("Kann nicht geladen werden.");
+    }
+    erzeugeBuffer();
 
 }
 
@@ -354,14 +370,16 @@ void MyGLWidget::erzeugeBuffer()
     vbo.create();
     vbo.bind();
     vbo.setUsagePattern(QOpenGLBuffer::StaticDraw);
-    vbo.allocate(vertices, sizeof(GLfloat) * 8 * 8);
+    vbo.allocate(vboData, sizeof(GLfloat) * vboLength);
     vbo.release();
     // Erzeuge Index-Buffer
     ibo.create();
     ibo.bind();
     ibo.setUsagePattern(QOpenGLBuffer::StaticDraw);
-    ibo.allocate(indices, sizeof(GLubyte) * 36);
+    ibo.allocate(indexData, sizeof(GLuint) * iboLength);
     ibo.release();
+
+
 }
 
 // Handler for window draw event
@@ -386,11 +404,11 @@ void MyGLWidget::paintGL()
     int attrVertices = 0;
     attrVertices = shaderProgram.attributeLocation("vert"); // #version 130
     // Lokalisiere bzw. definiere die Schnittstelle für die Farben
-    int attrColors = 1;
-    attrColors = shaderProgram.attributeLocation("color"); // #version 130
+    //int attrColors = 1;
+    //attrColors = shaderProgram.attributeLocation("color"); // #version 130
     // Aktiviere die Verwendung der Attribute-Arrays
     shaderProgram.enableAttributeArray(attrVertices);
-    shaderProgram.enableAttributeArray(attrColors);
+    //shaderProgram.enableAttributeArray(attrColors);
     // Lokalisiere bzw. definiere die Schnittstelle für die Transformationsmatrix
     // Die Matrix kann direkt übergeben werden, da setUniformValue für diesen Typ
     // überladen ist
@@ -409,7 +427,7 @@ void MyGLWidget::paintGL()
     int stride = 8 * sizeof(GLfloat);
     shaderProgram.setAttributeBuffer(attrVertices, GL_FLOAT, offset, 4, stride);
     offset += 4 * sizeof(GLfloat);
-    shaderProgram.setAttributeBuffer(attrColors, GL_FLOAT, offset, 4, stride);
+    //shaderProgram.setAttributeBuffer(attrColors, GL_FLOAT, offset, 4, stride);
 
 
 
@@ -422,12 +440,14 @@ void MyGLWidget::paintGL()
     // ist vom Typ GL_FLOAT, und 8*GL_Float Byte liegen zwischen jedem
     // nachfolgenden Eckpunkt
 
-    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_BYTE, 0);
+    //glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_BYTE, 0);
+    // Der Index-Array ist jetzt GLuint
+    glDrawElements(GL_TRIANGLES, iboLength, GL_UNSIGNED_INT, 0);
     //glDrawArrays(GL_TRIANGLES, 0, 6); // Alternative zu glDrawElements
     // Deaktiviere die Client-States wieder
     // Deaktiviere die Verwendung der Attribute-Arrays
     shaderProgram.disableAttributeArray(attrVertices);
-    shaderProgram.disableAttributeArray(attrColors);
+    //shaderProgram.disableAttributeArray(attrColors);
 
     /*glDisableClientState(GL_VERTEX_ARRAY);
     glDisableClientState(GL_COLOR_ARRAY);*/

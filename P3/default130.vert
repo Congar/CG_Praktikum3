@@ -8,6 +8,6 @@ varying vec4 col;
 
 void main()
 {
-    col = color;
+    col = vec4(1.0f,0,0,1.0f);
     gl_Position = pMatrix * vMatrix * matrix * vert;
 }
