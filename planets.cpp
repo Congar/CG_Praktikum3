@@ -109,9 +109,7 @@ void Planets::render()
 
     if ( !*paused )
     {
-       counter=1;
-    }else{
-     counter++;
+       counter++;
     }
 
 }
