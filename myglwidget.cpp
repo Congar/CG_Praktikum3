@@ -3,7 +3,7 @@
 #include <QKeyEvent>
 #include <QWheelEvent>
 #include "GL/gl.h"
-
+#include "planets.h"
 using namespace  std;
 
 /*MyGLWidget::MyGLWidget()
@@ -299,52 +299,31 @@ void MyGLWidget::fillArray()
 }
 
 
-MyGLWidget::MyGLWidget(QWidget *parent):QOpenGLWidget(parent)
+MyGLWidget::MyGLWidget(QWidget *parent):QGLWidget(parent)
   ,vbo(QOpenGLBuffer::VertexBuffer) // Typ festlegen
   ,ibo(QOpenGLBuffer::IndexBuffer)  // Typ festlegen
 {
        setFocusPolicy(Qt::StrongFocus); // the widget accepts focus by both tabbing and clicking
+       /*QTimer *timer = new QTimer(this) ;
+         connect(timer, SIGNAL(timeout()),this,SLOT(updateGL()));
+         timer->start(0);*/
+       cameraPos = QVector3D(0.0f, 0.0f, 20.0f);
 }
-// OpenGL settings initialization
-void MyGLWidget::initializeGL()
+
+
+MyGLWidget::~MyGLWidget()
 {
-    //fillArray();
+    //qTex->release();
+    shaderProgram.release();
 
-    glEnable(GL_DEPTH_TEST);
-    //glEnable(GL_CULL_FACE);
-    glDepthFunc(GL_LEQUAL);
-    glShadeModel(GL_SMOOTH);
-    glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
-    glClearDepth(1.0f);
-    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+    vbo.release();
+    ibo.release();
 
-    // *** Initialisierung ***
-    // Lade die Shader-Sourcen aus externen Dateien (ggf. anpassen)
-    shaderProgram.addShaderFromSourceFile(QOpenGLShader::Vertex, "D:/Computergrafik/Praktikum3/P3/default130.vert");
-    shaderProgram.addShaderFromSourceFile(QOpenGLShader::Fragment,"D:/Computergrafik/Praktikum3/P3/default130.frag");
-    // Kompiliere und linke die Shader-Programme
-    shaderProgram.link();
-    ModelLoader model;
-    bool res = model.loadObjectFromFile("D:/Computergrafik/Praktikum3/P3_models/sphere_high.obj");
-    if(res)
-    {
-        // Frage zu erwartende Array-Längen ab
-        vboLength = model.lengthOfVBO();
-        iboLength = model.lengthOfIndexArray();
-        // Generiere VBO und Index-Array
-        vboData = new GLfloat[vboLength];
-        indexData = new GLuint[iboLength];
-        model.genVBO(vboData,0,false,true);
-        model.genIndexArray(indexData);
-     }else
-    {
-        qDebug("Kann nicht geladen werden.");
-    }
-    erzeugeBuffer();
-
+    // Deaktiviere die Verwendung der Attribute Arrays
+    shaderProgram.disableAttributeArray(attrVertices);
+    //shaderProgram.disableAttributeArray(attrColors);
+    shaderProgram.disableAttributeArray(attrTexCoords);
 }
-
-
 // Handler for window resize and creation event
 void MyGLWidget::resizeGL(GLsizei width, GLsizei height)
 {
@@ -355,15 +334,24 @@ void MyGLWidget::resizeGL(GLsizei width, GLsizei height)
    // Set viewport to cover the whole window
    glViewport(0, 0, width, height);
 
-   // Set projection matrix to a perspective projection
+   // Set p matrix to a perspective projection
   // glMatrixMode(GL_PROJECTION);
    //
   // matrix.perspective(60.0, 4.0/3.0, 0.1, 100.0);
    //glLoadIdentity();
-   pMatrix.setToIdentity();
-   pMatrix.frustum(-0.05, 0.05, -0.05, 0.05, 0.1, 100.0);
+   float aspect = (float)width/(float)height;
+   pMatrix.setToIdentity();                // Set projection matrix to a perspective projection
+       if (aspect >= 1.0) {
+           pMatrix.frustum(-0.05f * aspect, 0.05f * aspect, -0.05f, 0.05f, 0.1f, 1000.0f);
+       }
+       else {
+           pMatrix.frustum(-0.05f, 0.05f, -0.05f / aspect, 0.05f / aspect, 0.1f, 1000.0f);
+       }
+  // pMatrix.setToIdentity();
+ //  pMatrix.frustum(-0.05, 0.05, -0.05, 0.05, 0.1, 1000.0);
 }
-void MyGLWidget::erzeugeBuffer()
+//Alle Initialisierungen:
+void MyGLWidget::initBuffer()
 {
     // *** Erzeugen der Buffer (nur einmal aufrufen) ***
     // Erzeuge VBO, die Parameter verteilen sich hier auf mehrere Methoden
@@ -379,87 +367,215 @@ void MyGLWidget::erzeugeBuffer()
     ibo.allocate(indexData, sizeof(GLuint) * iboLength);
     ibo.release();
 
+    vbo.bind();
+    ibo.bind();
+}
+void MyGLWidget::initShader()
+{
+
+
+    // Initialisierung Shader
+    // Lade Shader-Source aus externen Dateien
+    shaderProgram.addShaderFromSourceFile(QOpenGLShader::Vertex,"D:/Computergrafik/Praktikum3/P3/default130.vert") ;
+
+    shaderProgram.addShaderFromSourceFile(QOpenGLShader::Fragment,"D:/Computergrafik/Praktikum3/P3/default130.frag") ;
+    // Kompiliere und linke die Shader-Programme
+    shaderProgram.link() ;
+
+    // Binde das Shader-Programm an den OpenGL-Kontext
+    shaderProgram.bind();
+
+}
+void MyGLWidget::loadModel()
+{
+    // Lade Model aus Datei:
+        ModelLoader model ;
+        bool res = model.loadObjectFromFile("D:/Computergrafik/Praktikum3/P3_models/sphere_low.obj");
+        // Wenn erfolgreich, generiere VBO und Index-Array
+        if (res) {
+            // Frage zu erwartende Array-Längen ab
+            //vboLength = model.lengthOfSimpleVBO();
+            vboLength = model.lengthOfVBO(0,false,true);
+            iboLength = model.lengthOfIndexArray();
+            // Generiere VBO und Index-Array
+            vboData = new GLfloat[vboLength];
+            indexData = new GLuint[iboLength];
+            //model.genSimpleVBO(vboData);
+            model.genVBO(vboData,0,false,true);  // With textures
+            model.genIndexArray(indexData);
+        }
+        else {
+            // Modell konnte nicht geladen werden
+             assert(0) ;
+        }
 
 }
 
+// OpenGL settings initialization
+void MyGLWidget::initializeGL()
+{
+    //fillArray();
+
+    glEnable(GL_DEPTH_TEST);
+    //glEnable(GL_CULL_FACE);
+    glDepthFunc(GL_LEQUAL);
+    //glShadeModel(GL_SMOOTH);
+    glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+    glClearDepth(1.0f);
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    loadModel();
+    initTexturen();
+    initBuffer();
+    initShader();
+    initPlaneten();
+
+
+    // *** Initialisierung ***
+       attrVertices  = shaderProgram.attributeLocation("vert");     // #version 130
+       attrTexCoords = shaderProgram.attributeLocation("texCoord"); // #version 130
+
+
+       // Aktiviere die Verwendung der Attribute-Arrays
+       shaderProgram.enableAttributeArray(attrVertices);
+       shaderProgram.enableAttributeArray(attrTexCoords);
+
+
+       // Laden der
+       // Ein paar Hilfsvariablen - die 8 steht für
+       // 4 Eckpunktkoordinaten + 4 Texturkoordinaten
+       int offset = 0 ;
+       size_t stride = 8 * sizeof(GLfloat);
+       shaderProgram.setAttributeBuffer(attrVertices,GL_FLOAT,offset,4,stride);
+       offset += 4*sizeof(GLfloat);
+       shaderProgram.setAttributeBuffer(attrTexCoords,GL_FLOAT,offset,4,stride);
+
+
+       // Lokalisiere bzw. definierte die Schnittstelle für die Matritzen
+       // Die Matrix kann direkt übergeben werden, da setUniformValue für diesen Typ überladen ist.
+       unifMatrixPerspective = shaderProgram.uniformLocation("pMatrix");
+       Q_ASSERT(unifMatrixPerspective >= 0) ;
+       unifMatrixModel = shaderProgram.uniformLocation("matrix");
+       Q_ASSERT(unifMatrixModel >= 0) ;
+       unifMatrixView = shaderProgram.uniformLocation("vMatrix");
+       Q_ASSERT(unifMatrixView >= 0) ;
+
+       //qTex->bind();
+}
+void MyGLWidget::initTexturen()
+{
+
+    // Initialization
+    // Es scheint, dass man die QOpenQLTexture in dieser Klasse verwenden muss
+    // und die Übergabe an den Shader autmoatisch beim Erzeugen erfolgt.
+    // Aus anderen Klassen kann man dann die entsprechende QOpenGLTexture dann binden.
+
+   /* qTex = new QOpenGLTexture(QImage(":/Map/sunmap.jpg").mirrored()) ;
+    qTex->setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
+    qTex->setMagnificationFilter(QOpenGLTexture::Linear);*/
+
+    textures[0] = new QOpenGLTexture(QImage("D:/Computergrafik/Praktikum3/Map/sunmap.jpg").mirrored()) ;
+    textures[1] = new QOpenGLTexture(QImage("D:/Computergrafik/Praktikum3/Map/mercurymap.jpg").mirrored()) ;
+    textures[2] = new QOpenGLTexture(QImage("D:/Computergrafik/Praktikum3/Map/venusmap.jpg").mirrored()) ;
+    textures[3] = new QOpenGLTexture(QImage("D:/Computergrafik/Praktikum3/Map/earthmap1k.jpg").mirrored()) ;
+    textures[4] = new QOpenGLTexture(QImage("D:/Computergrafik/Praktikum3/Map/moonmap1k.jpg").mirrored()) ;
+    textures[5] = new QOpenGLTexture(QImage("D:/Computergrafik/Praktikum3/Map/marsmap1k.jpg").mirrored()) ;
+    textures[6] = new QOpenGLTexture(QImage("D:/Computergrafik/Praktikum3/Map/phobos.jpg").mirrored()) ;
+    textures[7] = new QOpenGLTexture(QImage("D:/Computergrafik/Praktikum3/Map/deimos.jpg").mirrored()) ;
+    textures[8] = new QOpenGLTexture(QImage("D:/Computergrafik/Praktikum3/Map/jupitermap.jpg").mirrored()) ;
+    textures[9] = new QOpenGLTexture(QImage("D:/Computergrafik/Praktikum3/Map/saturnmap.jpg").mirrored()) ;
+    textures[10] = new QOpenGLTexture(QImage("D:/Computergrafik/Praktikum3/Map/uranusmap.jpg").mirrored()) ;
+    textures[11] = new QOpenGLTexture(QImage("D:/Computergrafik/Praktikum3/Map/neptunemap.jpg").mirrored()) ;
+
+
+    for ( int i=0 ; i < 12 ; i++) {
+        textures[i]->setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
+        textures[i]->setMagnificationFilter(QOpenGLTexture::Linear);
+    }
+
+  //Q_ASSERT( qTex->textureId() == 0 ) ;
+
+
+}
+void MyGLWidget::initPlaneten()
+{
+    // Logische Anordnung der Planeten univmap.jpg
+    sonne.setPlanetParameter(&shaderProgram, &unifMatrixModel, &matrixStack, &iboLength, textures[0]    ,  &paused, 0,0,0.2,5) ;
+    merkur.setPlanetParameter(&shaderProgram, &unifMatrixModel, &matrixStack, &iboLength, textures[1]   ,  &paused,10,0.5,0.001,0.5) ;
+    venus.setPlanetParameter(&shaderProgram, &unifMatrixModel, &matrixStack, &iboLength, textures[2]    ,  &paused, 14,0.6,0.001,0.85) ;
+    erde.setPlanetParameter(&shaderProgram, &unifMatrixModel, &matrixStack, &iboLength, textures[3]     ,  &paused, 18,0.1,1.1,0.7) ;
+    erdemond.setPlanetParameter(&shaderProgram, &unifMatrixModel, &matrixStack, &iboLength, textures[4] ,  &paused, 1,1.25,0,0.2) ;
+    mars.setPlanetParameter(&shaderProgram, &unifMatrixModel, &matrixStack, &iboLength, textures[5]     ,  &paused, 22,0.53,0.5,0.6) ;
+    phobos.setPlanetParameter(&shaderProgram, &unifMatrixModel, &matrixStack, &iboLength, textures[6]   ,  &paused, 1,2,0.5,0.03) ;
+    deimos.setPlanetParameter(&shaderProgram, &unifMatrixModel, &matrixStack, &iboLength, textures[7]   ,  &paused, 2,0.5,0.5,0.03) ;
+    jupiter.setPlanetParameter(&shaderProgram, &unifMatrixModel, &matrixStack, &iboLength, textures[8]  ,  &paused, 35,0.085,2.42,3) ;
+    saturn.setPlanetParameter(&shaderProgram, &unifMatrixModel, &matrixStack, &iboLength, textures[9]   ,  &paused, 45,0.035,2.22,1.5) ;
+    uranus.setPlanetParameter(&shaderProgram, &unifMatrixModel, &matrixStack, &iboLength, textures[10]   , &paused, 55,0.012,1.39,1.5) ;
+    neptun.setPlanetParameter(&shaderProgram, &unifMatrixModel, &matrixStack, &iboLength, textures[11]   , &paused, 65,0.006,1.42,1) ;
+    sonne.addSubPlanet(&merkur);
+    sonne.addSubPlanet(&venus);
+    sonne.addSubPlanet(&erde);
+    erde.addSubPlanet(&erdemond);
+
+    sonne.addSubPlanet(&mars);
+    mars.addSubPlanet(&phobos);
+    mars.addSubPlanet(&deimos);
+
+    sonne.addSubPlanet(&jupiter);
+    sonne.addSubPlanet(&saturn);
+    sonne.addSubPlanet(&uranus);
+    sonne.addSubPlanet(&neptun);
+
+
+
+}
 // Handler for window draw event
 void MyGLWidget::paintGL()
 {
     // *** Rendern ***
      // Clear buffer to set color and alpha
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    //std::stack<QMatrix4x4> matrixStack;
-    matrix.setToIdentity();
-    vMatrix.setToIdentity();
-    matrix.translate(x_Axis, y_Axis, z_Axis);
-    matrix.rotate(counter,0,1,0);
-    matrix.rotate(counter,0,1,0);
-    matrixStack.push(matrix);
-    matrix=matrixStack.top();
-    matrixStack.pop();
-    shaderProgram.bind();
-    vbo.bind();
-    ibo.bind();
-    // Lokalisiere bzw. definiere die Schnittstelle für die Eckpunkte
-    int attrVertices = 0;
-    attrVertices = shaderProgram.attributeLocation("vert"); // #version 130
-    // Lokalisiere bzw. definiere die Schnittstelle für die Farben
-    //int attrColors = 1;
-    //attrColors = shaderProgram.attributeLocation("color"); // #version 130
-    // Aktiviere die Verwendung der Attribute-Arrays
-    shaderProgram.enableAttributeArray(attrVertices);
-    //shaderProgram.enableAttributeArray(attrColors);
-    // Lokalisiere bzw. definiere die Schnittstelle für die Transformationsmatrix
-    // Die Matrix kann direkt übergeben werden, da setUniformValue für diesen Typ
-    // überladen ist
-    int unifMatrix = 0;
-    unifMatrix = shaderProgram.uniformLocation("matrix"); // #version 130
-    int punifMatrix = 0;
-    punifMatrix = shaderProgram.uniformLocation("pMatrix"); // #version 130
-    int vunifMatrix = 0;
-    vunifMatrix = shaderProgram.uniformLocation("vMatrix"); // #version 130
+    shaderProgram.setUniformValue(unifMatrixPerspective,pMatrix);
+    // VIEW TRANSFORMATION
+        QMatrix4x4 viewMatrix ;
+        viewMatrix.lookAt(cameraPos,cameraPos+cameraFront,cameraUp);
+        shaderProgram.setUniformValue(unifMatrixView,viewMatrix);
 
-    shaderProgram.setUniformValue(unifMatrix, matrix);
-    shaderProgram.setUniformValue(punifMatrix, pMatrix);
-    shaderProgram.setUniformValue(vunifMatrix, vMatrix);
-    // Fülle die Attribute-Buffer mit den korrekten Daten
-    int offset = 0;
-    int stride = 8 * sizeof(GLfloat);
-    shaderProgram.setAttributeBuffer(attrVertices, GL_FLOAT, offset, 4, stride);
-    offset += 4 * sizeof(GLfloat);
-    //shaderProgram.setAttributeBuffer(attrColors, GL_FLOAT, offset, 4, stride);
+        // MODEL TRANSFORMATION (Neues OpenGL)
+        QMatrix4x4 modelMatrix ;
+        // Initialisierung des Modells
+        modelMatrix.setToIdentity();
+        matrixStack.push(modelMatrix);
+
+
+      /*  // Zeit zwischen den Render Bildern
+        elapsedTime = tmrRender.elapsed();
+        //qDebug() << elapsedTime ;
+        tmrRender.start();*/
+
+
+        // glBindTexture(GL_TEXTURE_2D,tList[sun]);
+        //qTex->bind();
+        textures[1]->bind();
+        textures[1]->bind();
+
+
+        // Übergebe die Textur an die Uniform Variable
+        // Die 0 steht dabei für die verwendete Unit (0=Standard)
+        //shaderProgram.setUniformValue("texture",0);
 
 
 
+        // Triggern des Renderns
+        sonne.render();
 
-    //glEnableClientState(GL_VERTEX_ARRAY);
-    //glEnableClientState(GL_COLOR_ARRAY);
+        // Stack wieder säubern.
+        matrixStack.pop();
 
-    // Setze den Vertex-Pointer ( veraltet )
-    // Der erste Vertex liegt an Stelle 0 des VBO, hat 4 Komponenten,
-    // ist vom Typ GL_FLOAT, und 8*GL_Float Byte liegen zwischen jedem
-    // nachfolgenden Eckpunkt
-
-    //glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_BYTE, 0);
-    // Der Index-Array ist jetzt GLuint
-    glDrawElements(GL_TRIANGLES, iboLength, GL_UNSIGNED_INT, 0);
-    //glDrawArrays(GL_TRIANGLES, 0, 6); // Alternative zu glDrawElements
-    // Deaktiviere die Client-States wieder
-    // Deaktiviere die Verwendung der Attribute-Arrays
-    shaderProgram.disableAttributeArray(attrVertices);
-    //shaderProgram.disableAttributeArray(attrColors);
-
-    /*glDisableClientState(GL_VERTEX_ARRAY);
-    glDisableClientState(GL_COLOR_ARRAY);*/
+        //qTex->release();
 
 
-//NEU FÜR P3:
-   // pmodel = glmReadOBJ("data/al.obj");
 
-
-        //Punkt1: rot
-
-/*
+/*      glDrawElements(GL_TRIANGLES, iboLength, GL_UNSIGNED_INT, 0);
         glVertex3f(-1.0f,-1.0f,-1.0f);      //A
         glVertex3f( 1.0f, -1.0f,  -1.0f);   //B
         glVertex3f(1.0f,  1.0f,  -1.0f);    //C
@@ -469,25 +585,18 @@ void MyGLWidget::paintGL()
         glVertex3f(1.0f,1.0f,1.0f);         //G
         glVertex3f( -1.0f, 1.0f,  1.0f);    //H
 */
+        //counter++;
 
-    QOpenGLWidget::update();
-    // Execute all issued GL commands
-
-    // Increment counter
-    counter++;
-    vbo.release();
-    ibo.release();
-    // Löse das Shader-Programm
-    shaderProgram.release();
+        update();
 }
 void MyGLWidget::receiveRotationZ(int wert)
 {
-    slider = wert;
+    zRotation = wert ;
 }
 void MyGLWidget::keyPressEvent(QKeyEvent *event)
 {
 
-    if (event->key() == Qt::Key_Up || event->key() == Qt::Key_W)
+    /*if (event->key() == Qt::Key_Up || event->key() == Qt::Key_W)
             y_Axis++;
         else if(event->key() == Qt::Key_Down || event->key() == Qt::Key_S)
             y_Axis--;
@@ -498,9 +607,56 @@ void MyGLWidget::keyPressEvent(QKeyEvent *event)
         else {
                 QOpenGLWidget::keyPressEvent(event);
              }
+             */
+    GLfloat   cameraSpeed = 1.0f ;
+       QVector3D cross ;
+
+       bool      changedFront = false ;
+       switch ( event->key()) {
+           case Qt::Key_W     : cameraPos += cameraSpeed * cameraFront ;
+                break ;
+           case Qt:: Key_S    : cameraPos -= cameraSpeed * cameraFront ;
+                break ;
+           case Qt::Key_A     : cross = cross.crossProduct(cameraFront , cameraUp) ;
+                                cross.normalize();
+                                cameraPos -= cross * cameraSpeed ;
+                break ;
+           case Qt::Key_D     : cross = cross.crossProduct(cameraFront , cameraUp) ;
+                                cross.normalize();
+                                cameraPos += cross * cameraSpeed ;
+                break ;
+           case Qt::Key_Up    : pitch += 1 ;
+                                changedFront = true ;
+                break ;
+           case Qt::Key_Down  : pitch -= 1 ;
+                                changedFront = true ;
+                break ;
+           case Qt::Key_Left  : yaw -= 1 ;
+                                changedFront = true ;
+                break ;
+           case Qt::Key_Right : yaw += 1 ;
+                                changedFront = true ;
+                break ;
+           case Qt::Key_P     : paused = !paused ;
+                break ;
+           case Qt::Key_R     : //cameraPos = QVector3D(0.0f, 0.0f, 3.0f);
+                                cameraPos = QVector3D(0.0f, 0.0f, 20.0f);
+                                cameraFront = QVector3D(0.0f, 0.0f, -1.0f);
+                                cameraUp = QVector3D(0.0f, 1.0f, 0.0f);
+                break ;
+           default : QGLWidget::keyPressEvent(event) ;
+       }
+
+         if (changedFront)
+         {
+         QVector3D front;
+             front.setX ( cos(pitch*(M_PI/180)) * cos(yaw*(M_PI/180)) );
+             front.setY ( sin(pitch*(M_PI/180) )  );
+             front.setZ ( cos(pitch*(M_PI/180)) * sin(yaw*(M_PI/180)) );
+             front.normalize();
+             cameraFront = front ;
+         }
 }
-
-
 void MyGLWidget::wheelEvent(QWheelEvent* event)
 {
     //Maus 360° jeder step ist 15°
@@ -508,15 +664,6 @@ void MyGLWidget::wheelEvent(QWheelEvent* event)
     int numSteps = numDegrees / 15;
 
     if (event->orientation() == Qt::Horizontal) {
-        z_Axis+=numSteps;
-        //The emit line emits the signal valueChanged() from the object, with the new value as argument.
-        emit valueChanged(z_Axis);
-
-
-    } else {
-        z_Axis-=numSteps;
-        //The emit line emits the signal valueChanged() from the object, with the new value as argument.
-        emit valueChanged(z_Axis);
+        cameraPos = QVector3D(0.0f, 0.0f, numSteps);
     }
-    event->accept();
 }

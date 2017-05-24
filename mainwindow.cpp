@@ -7,7 +7,7 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
     //Slider zu Spinbox
-    connect(ui->sldRotationZ,SIGNAL(valueChanged(int)),
+    /*connect(ui->sldRotationZ,SIGNAL(valueChanged(int)),
             ui->sbxRotationZ,SLOT(setValue(int)));
     //Slider für Rotation zu Fenster
     connect(ui->sldRotationZ,SIGNAL(valueChanged(int)),
@@ -15,7 +15,7 @@ MainWindow::MainWindow(QWidget *parent) :
     //Slider zu Fenster für Zoom
     connect(ui->widget,SIGNAL(valueChanged(int)),
             ui->sbxZoom, SLOT(setValue(int)));
-    ui->sbxZoom->setValue(-7);
+    ui->sbxZoom->setValue(-7);*/
 }
 
 MainWindow::~MainWindow()

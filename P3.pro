@@ -33,12 +33,14 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += main.cpp\
         mainwindow.cpp \
     myglwidget.cpp \
-    modelloader.cpp
+    modelloader.cpp \
+    planets.cpp
 
 
 HEADERS  += mainwindow.h \
     myglwidget.h \
-    modelloader.h
+    modelloader.h \
+    planets.h
 
 FORMS    += mainwindow.ui
 
@@ -48,3 +50,4 @@ DISTFILES += \
 
 RESOURCES += \
     shader.qrc
+
