@@ -16,7 +16,7 @@ class Planets
     int    radius ;    // Abstand zum übergeordneten Planeten
     double    angleCenterFactor ;     // Faktor: Aktueller Rotationswinkel bezogen auf den übergeordneten Planeten (Umlauf)
     double    selfRotationFactor ;    // Faktor: Eigendrehung des Planeten
-    double scale ;     // Skalierungsfaktor für den Planet
+    double scale,neigung ;     // Skalierungsfaktor für den Planet
     unsigned int* iboLength ;
     QOpenGLShaderProgram* shaderProgram ;
     int* unifMatrixModel ;
@@ -47,7 +47,7 @@ public:
                             int _radius,
                             double _angleCenterFactor ,
                             double _selfRotationFactor ,
-                            double _scale );
+                            double _scale,double _neigung );
     void addSubPlanet( Planets* _newSubPlanet ) ;
     void render() ;
     double counter=0;

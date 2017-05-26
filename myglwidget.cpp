@@ -499,18 +499,18 @@ void MyGLWidget::initTexturen()
 void MyGLWidget::initPlaneten()
 {
     // Logische Anordnung der Planeten univmap.jpg
-    sonne.setPlanetParameter(&shaderProgram, &unifMatrixModel, &matrixStack, &iboLength, textures[0]    ,  &paused, 0,0,0.2,5) ;
-    merkur.setPlanetParameter(&shaderProgram, &unifMatrixModel, &matrixStack, &iboLength, textures[1]   ,  &paused,10,0.5,0.001,0.5) ;
-    venus.setPlanetParameter(&shaderProgram, &unifMatrixModel, &matrixStack, &iboLength, textures[2]    ,  &paused, 14,0.6,0.001,0.85) ;
-    erde.setPlanetParameter(&shaderProgram, &unifMatrixModel, &matrixStack, &iboLength, textures[3]     ,  &paused, 18,0.1,1.1,0.7) ;
-    erdemond.setPlanetParameter(&shaderProgram, &unifMatrixModel, &matrixStack, &iboLength, textures[4] ,  &paused, 1,1.25,0,0.2) ;
-    mars.setPlanetParameter(&shaderProgram, &unifMatrixModel, &matrixStack, &iboLength, textures[5]     ,  &paused, 22,0.53,0.5,0.6) ;
-    phobos.setPlanetParameter(&shaderProgram, &unifMatrixModel, &matrixStack, &iboLength, textures[6]   ,  &paused, 1,2,0.5,0.03) ;
-    deimos.setPlanetParameter(&shaderProgram, &unifMatrixModel, &matrixStack, &iboLength, textures[7]   ,  &paused, 2,0.5,0.5,0.03) ;
-    jupiter.setPlanetParameter(&shaderProgram, &unifMatrixModel, &matrixStack, &iboLength, textures[8]  ,  &paused, 35,0.085,2.42,3) ;
-    saturn.setPlanetParameter(&shaderProgram, &unifMatrixModel, &matrixStack, &iboLength, textures[9]   ,  &paused, 45,0.035,2.22,1.5) ;
-    uranus.setPlanetParameter(&shaderProgram, &unifMatrixModel, &matrixStack, &iboLength, textures[10]   , &paused, 55,0.012,1.39,1.5) ;
-    neptun.setPlanetParameter(&shaderProgram, &unifMatrixModel, &matrixStack, &iboLength, textures[11]   , &paused, 65,0.006,1.42,1) ;
+    sonne.setPlanetParameter(&shaderProgram, &unifMatrixModel, &matrixStack, &iboLength, textures[0]    ,  &paused, 0,0,0.2,5,0) ;
+    merkur.setPlanetParameter(&shaderProgram, &unifMatrixModel, &matrixStack, &iboLength, textures[1]   ,  &paused,10,0.5,0.001,0.5,0) ;
+    venus.setPlanetParameter(&shaderProgram, &unifMatrixModel, &matrixStack, &iboLength, textures[2]    ,  &paused, 14,0.6,0.001,0.85,0) ;
+    erde.setPlanetParameter(&shaderProgram, &unifMatrixModel, &matrixStack, &iboLength, textures[3]     ,  &paused, 18,0.1,1.1,0.7,40) ;
+    erdemond.setPlanetParameter(&shaderProgram, &unifMatrixModel, &matrixStack, &iboLength, textures[4] ,  &paused, 1,1.25,0,0.2,0) ;
+    mars.setPlanetParameter(&shaderProgram, &unifMatrixModel, &matrixStack, &iboLength, textures[5]     ,  &paused, 22,0.53,0.5,0.6,0) ;
+    phobos.setPlanetParameter(&shaderProgram, &unifMatrixModel, &matrixStack, &iboLength, textures[6]   ,  &paused, 1,2,0.5,0.03,0) ;
+    deimos.setPlanetParameter(&shaderProgram, &unifMatrixModel, &matrixStack, &iboLength, textures[7]   ,  &paused, 2,0.5,0.5,0.03,0) ;
+    jupiter.setPlanetParameter(&shaderProgram, &unifMatrixModel, &matrixStack, &iboLength, textures[8]  ,  &paused, 35,0.085,2.42,3,0) ;
+    saturn.setPlanetParameter(&shaderProgram, &unifMatrixModel, &matrixStack, &iboLength, textures[9]   ,  &paused, 45,0.035,2.22,1.5,0) ;
+    uranus.setPlanetParameter(&shaderProgram, &unifMatrixModel, &matrixStack, &iboLength, textures[10]   , &paused, 55,0.012,1.39,1.5,0) ;
+    neptun.setPlanetParameter(&shaderProgram, &unifMatrixModel, &matrixStack, &iboLength, textures[11]   , &paused, 65,0.006,1.42,1,0) ;
     sonne.addSubPlanet(&merkur);
     sonne.addSubPlanet(&venus);
     sonne.addSubPlanet(&erde);
