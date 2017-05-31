@@ -73,6 +73,7 @@ public:
        QVector3D cameraUp = QVector3D(0.0f, 1.0f, 0.0f);
        GLfloat yaw   = -90.0f;	// Yaw is initialized to -90.0 degrees since a yaw of 0.0 results in a direction vector pointing to the right (due to how Eular angles work) so we initially rotate a bit to the left.
        GLfloat pitch =   0.0f;
+       QVector3D perspectivCamPos = QVector3D(0.0f,0.0f,0.0f);
     // Paused
     bool paused = false ;
     //MyGLWidget();

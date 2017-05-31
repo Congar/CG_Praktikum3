@@ -1,5 +1,5 @@
 #include "planets.h"
-
+#include "myglwidget.h"
 
 Planets::Planets()
 {
@@ -83,6 +83,7 @@ void Planets::render()
     modelMatrix.rotate(-neigung, 1, 0, 0) ;
     // Koordinatensystem wieder zurückdrehen, damit es in der initialen Position liegtt.
     modelMatrix.rotate(-counter * angleCenterFactor,0,1,0);
+
 
 
     // Das aktuelle Objekt ist gezeichnet. Jetzt betrachtet man noch die untergeordneten Systeme.

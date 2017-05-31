@@ -461,6 +461,8 @@ void MyGLWidget::initializeGL()
 
        //qTex->bind();
 }
+
+
 void MyGLWidget::initTexturen()
 {
 
@@ -586,7 +588,7 @@ void MyGLWidget::paintGL()
         glVertex3f( -1.0f, 1.0f,  1.0f);    //H
 */
         //counter++;
-
+        cameraPos=perspectivCamPos;
         update();
 }
 void MyGLWidget::receiveRotationZ(int wert)
